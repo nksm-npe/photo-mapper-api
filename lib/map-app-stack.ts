@@ -6,6 +6,7 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import { RemovalPolicy } from "aws-cdk-lib";
 import { HttpMethods } from "aws-cdk-lib/aws-s3";
+import * as iam from "aws-cdk-lib/aws-iam";
 
 export class MapAppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -48,6 +49,31 @@ export class MapAppStack extends cdk.Stack {
     // DynamoDBテーブルへのアクセスポリシーをLambda関数に追加
     table.grantReadData(lambdaFunction);
 
+    const policy = new iam.Policy(this, "lambda-s3-multiupload", {
+      policyName: "lambda-s3-multiupload",
+      statements: [
+        new iam.PolicyStatement({
+          resources: [s3bucket.bucketArn, `${s3bucket.bucketArn}/*`],
+          actions: ["kms:GenerateDataKey", "kms:Decrypt", "s3:PutObject"],
+          effect: iam.Effect.ALLOW,
+        }),
+      ],
+    });
+    const executionLambdaRole = new iam.Role(
+      this,
+      "SampleLambdaExecutionRole",
+      {
+        roleName: "sample-lambda-execution-role",
+        assumedBy: new iam.ServicePrincipal("lambda.amazonaws.com"),
+        managedPolicies: [
+          iam.ManagedPolicy.fromAwsManagedPolicyName(
+            "service-role/AWSLambdaBasicExecutionRole"
+          ),
+        ],
+        inlinePolicies: { s3MultiUpload: policy.document },
+      }
+    );
+
     const lambdaGetUploadId = new lambda.Function(this, "GetUploadIdFunction", {
       runtime: lambda.Runtime.PYTHON_3_11,
       handler: "get_upload_id.handler",
@@ -55,6 +81,7 @@ export class MapAppStack extends cdk.Stack {
       environment: {
         BUCKET_NAME: s3bucket.bucketName,
       },
+      role: executionLambdaRole,
     });
 
     const lambdaGetPresignedUrl = new lambda.Function(
