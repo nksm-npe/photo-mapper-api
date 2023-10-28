@@ -10,7 +10,7 @@ S3_OBJECT_NAME = "fileupload/"
 DURATION_SECONDS = 60 * 60 * 24
 
 
-def lambda_handler(event, context):
+def handler(event, context):
     # 署名付きURLに含めるファイル名、パートNo、アップロードIDを取得
     file_name = event["queryStringParameters"]["fileName"]
     part_number = int(event["queryStringParameters"]["partNumber"])

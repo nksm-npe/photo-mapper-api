@@ -7,7 +7,7 @@ S3_BUCKET_NAME = os.environ["BUCKET_NAME"]
 S3_OBJECT_NAME = "fileupload/"
 
 
-def lambda_handler(event, context):
+def handler(event, context):
     body_json = json.loads(event["body"])
     parts = body_json["Parts"]
     upload_id = body_json["UploadId"]
