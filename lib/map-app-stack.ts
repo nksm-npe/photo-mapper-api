@@ -34,6 +34,9 @@ export class MapAppStack extends cdk.Stack {
           exposedHeaders: ["ETag", "x-amz-meta-custom-header"],
         },
       ],
+      lifecycleRules: [
+        { abortIncompleteMultipartUploadAfter: cdk.Duration.days(1) },
+      ],
     });
 
     // Lambda関数の作成
@@ -54,7 +57,16 @@ export class MapAppStack extends cdk.Stack {
       statements: [
         new iam.PolicyStatement({
           resources: [s3bucket.bucketArn, `${s3bucket.bucketArn}/*`],
-          actions: ["kms:GenerateDataKey", "kms:Decrypt", "s3:PutObject"],
+          actions: [
+            "kms:GenerateDataKey",
+            "kms:Decrypt",
+            "s3:PutObject",
+            "s3:GetObject",
+            "s3:ListBucketMultipartUploads",
+            "s3:PutObjectAcl",
+            "s3:ListBucket",
+            "s3:DeleteObject",
+          ],
           effect: iam.Effect.ALLOW,
         }),
       ],
@@ -94,6 +106,7 @@ export class MapAppStack extends cdk.Stack {
         environment: {
           BUCKET_NAME: s3bucket.bucketName,
         },
+        role: executionLambdaRole,
       }
     );
 
@@ -107,6 +120,7 @@ export class MapAppStack extends cdk.Stack {
         environment: {
           BUCKET_NAME: s3bucket.bucketName,
         },
+        role: executionLambdaRole,
       }
     );
 
@@ -134,7 +148,7 @@ export class MapAppStack extends cdk.Stack {
     resourceMultipartUpload
       .addResource("completion")
       .addMethod(
-        "POST",
+        "GET",
         new apigateway.LambdaIntegration(lambdaUploadCompletion)
       );
   }
