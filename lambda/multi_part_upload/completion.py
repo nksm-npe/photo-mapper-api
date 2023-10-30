@@ -11,7 +11,7 @@ def handler(event, context):
     body_json = json.loads(event["body"])
     parts = body_json["Parts"]
     upload_id = body_json["UploadId"]
-    file_name = body_json["file_Name"]
+    file_name = body_json["FileName"]
 
     client = boto3.client("s3")
     response = client.complete_multipart_upload(
