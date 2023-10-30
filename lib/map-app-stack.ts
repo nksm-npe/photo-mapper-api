@@ -148,7 +148,7 @@ export class MapAppStack extends cdk.Stack {
     resourceMultipartUpload
       .addResource("completion")
       .addMethod(
-        "GET",
+        "POST",
         new apigateway.LambdaIntegration(lambdaUploadCompletion)
       );
   }
